@@ -67,18 +67,29 @@ impl TargetsFile {
     }
 
     pub fn write(&self) -> anyhow::Result<()> {
-        let mut file = File::options()
+        if let Some(parent) = self.config_path.parent() {
+            if !parent.exists() {
+                std::fs::create_dir_all(parent)?;
+            }
+        }
+
+        let maybe_file = File::options()
+            .create(true)
             .write(true)
             .truncate(true)
-            .open(&self.config_path)?;
+            .open(&self.config_path);
 
-        let content = self
-            .items()
-            .map(|(name, path)| [name.as_ref(), path.to_string_lossy().as_ref()].join(":"))
-            .join("\n");
+        if let Ok(mut file) = maybe_file {
+            let content = self
+                .items()
+                .map(|(name, path)| [name.as_ref(), path.to_string_lossy().as_ref()].join(":"))
+                .join("\n");
 
-        file.write_all(content.as_ref())?;
-        Ok(())
+            file.write_all(content.as_ref())?;
+            Ok(())
+        } else {
+            anyhow::bail!("Cannot open file {}", self.config_path.to_string_lossy())
+        }
     }
 
     pub fn read(path: &Path) -> anyhow::Result<Self> {

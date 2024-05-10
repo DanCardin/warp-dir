@@ -194,7 +194,7 @@ fn clean(target_file: &TargetsFile) -> anyhow::Result<Vec<(String, PathBuf)>> {
         }
     }
 
-    let mut target_file = target_file.deref().clone();
+    let mut target_file = target_file.clone();
     for (name, _) in removable_targets.iter() {
         target_file.remove(Some(name))?;
     }
